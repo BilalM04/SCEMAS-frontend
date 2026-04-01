@@ -1,0 +1,2 @@
+streamlit==1.56.0
+Pyrebase4==4.9.0
