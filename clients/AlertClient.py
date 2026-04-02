@@ -2,6 +2,7 @@ import streamlit as st
 from typing import List
 import time
 import uuid
+import random
 
 from utils.Request import request
 
@@ -19,37 +20,71 @@ base_url = st.secrets["BACKEND_BASE_URL"]
 
 USE_MOCKS = True
 
+# ----------------------
+# Stable randomness (per session)
+# ----------------------
+if "seed" not in st.session_state:
+    st.session_state.seed = random.randint(0, 100000)
+
+random.seed(st.session_state.seed)
+
+# ----------------------
+# Random pools
+# ----------------------
+
+CITIES = [
+    ("Toronto", 43.6532, -79.3832),
+    ("Hamilton", 43.2557, -79.8711),
+    ("Vancouver", 49.2827, -123.1207),
+    ("Calgary", 51.0447, -114.0719),
+    ("Montreal", 45.5017, -73.5673),
+]
+
+RULE_NAMES = [
+    "High Temperature",
+    "Low Humidity",
+    "Pressure Spike",
+    "Air Quality Alert",
+    "Flood Warning"
+]
 
 # ----------------------
 # Mock Generators
 # ----------------------
 
 def _mock_alert(alert_id: str = None) -> AlertInformation:
+    city, _, _ = random.choice(CITIES)
+
     return AlertInformation(
         alert_id=alert_id or str(uuid.uuid4()),
-        rule_id="rule-123",
-        sensor_id="sensor-456",
-        rule_name="High Temperature",
-        time=int(time.time()),
-        sensor_type=SensorType.TEMPERATURE,
-        severity=AlertSeverity.HIGH,
-        status=AlertStatus.ACTIVE,
+        rule_id=str(uuid.uuid4()),
+        sensor_id=f"sensor-{random.randint(100,999)}",
+        rule_name=random.choice(RULE_NAMES),
+        time=int(time.time()) - random.randint(0, 3600),
+        sensor_type=random.choice(list(SensorType)),
+        severity=random.choice(list(AlertSeverity)),
+        status=random.choice(list(AlertStatus)),
         country="Canada",
-        city="Hamilton"
+        city=city
     )
 
 
 def _mock_rule(rule_id: str = None) -> AlertRuleData:
+    _, lat, lon = random.choice(CITIES)
+
     return AlertRuleData(
         rule_id=rule_id or str(uuid.uuid4()),
-        author_id="user-1",
-        name="Temperature Threshold",
-        threshold=30.0,
-        operator=ComparisonOperator.GREATER_THAN,
-        location=Coordinate(latitude=43.2557, longitude=-79.8711),
-        radius=10.0,
-        sensor_type=SensorType.TEMPERATURE,
-        created_at=int(time.time()),
+        author_id=f"user-{random.randint(1,10)}",
+        name=random.choice(RULE_NAMES),
+        threshold=round(random.uniform(10.0, 100.0), 2),
+        operator=random.choice(list(ComparisonOperator)),
+        location=Coordinate(
+            latitude=lat + random.uniform(-0.1, 0.1),
+            longitude=lon + random.uniform(-0.1, 0.1)
+        ),
+        radius=round(random.uniform(1.0, 50.0), 2),
+        sensor_type=random.choice(list(SensorType)),
+        created_at=int(time.time()) - random.randint(0, 100000),
         updated_at=int(time.time())
     )
 
@@ -57,10 +92,11 @@ def _mock_rule(rule_id: str = None) -> AlertRuleData:
 def _mock_subscription(rule_id: str = None) -> Subscription:
     return Subscription(
         subscription_id=str(uuid.uuid4()),
-        subscriber_id="user-1",
-        rule_id=rule_id or "rule-123",
-        rule_name="Temperature Threshold"
+        subscriber_id=f"user-{random.randint(1,10)}",
+        rule_id=rule_id or str(uuid.uuid4()),
+        rule_name=random.choice(RULE_NAMES)
     )
+
 
 # ----------------------
 # Helpers (parsers)
@@ -120,8 +156,8 @@ def _unwrap(response):
 
 def get_alerts() -> List[AlertInformation]:
     if USE_MOCKS:
-        return [_mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert(), _mock_alert()]
-    else: 
+        return [_mock_alert() for _ in range(20)]
+    else:
         res = request("GET", f"{base_url}/alerts/")
         return [_parse_alert(a) for a in _unwrap(res)]
 
@@ -187,7 +223,7 @@ def delete_alert_rule(rule_id: str) -> bool:
 
 def get_all_alert_rules() -> List[AlertRuleData]:
     if USE_MOCKS:
-        return [_mock_rule(), _mock_rule()]
+        return [_mock_rule() for _ in range(random.randint(1, 5))]
     else:
         res = request("GET", f"{base_url}/alerts/rules")
         return [_parse_alert_rule(r) for r in _unwrap(res)]
@@ -219,7 +255,7 @@ def unsubscribe_from_alert(rule_id: str) -> bool:
 
 def get_my_subscriptions() -> List[Subscription]:
     if USE_MOCKS:
-        return [_mock_subscription(), _mock_subscription()]
+        return [_mock_subscription() for _ in range(random.randint(1, 5))]
     else:
         res = request("GET", f"{base_url}/alerts/subscriptions")
         return [_parse_subscription(s) for s in _unwrap(res)]

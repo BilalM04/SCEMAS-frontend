@@ -158,11 +158,21 @@ else:
     )
 
     # Handle selection
+    prev_selected = st.session_state.get("alerts_selected_alert")
+
     if event.selection["rows"]:
         selected_index = event.selection["rows"][0]
-        st.session_state["alerts_selected_alert"] = filtered_df.iloc[selected_index]
+        new_selected = filtered_df.iloc[selected_index]
+
+        # If selection changed → close dialog
+        if prev_selected is None or prev_selected.alert_id != new_selected.alert_id:
+            st.session_state["alerts_show_dialog"] = False
+
+        st.session_state["alerts_selected_alert"] = new_selected
     else:
+        # Selection cleared → close dialog
         st.session_state["alerts_selected_alert"] = None
+        st.session_state["alerts_show_dialog"] = False
 
     # -----------------------
     # Action Button
