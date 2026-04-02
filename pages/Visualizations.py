@@ -210,10 +210,163 @@ with map_tab:
     # -----------------------
     # Render Map
     # -----------------------
-    st_folium(m, use_container_width=True)
+    st_folium(m, width='stretch')
 
 # -----------------------
 # Graphs Tab
 # -----------------------
 with graphs_tab:
-    st.info("Graphs coming soon...")
+    sensors = st.session_state["sensor_data"]
+    fetch_failed = st.session_state["fetch_failed"]
+
+    if fetch_failed:
+        st.error("Failed to fetch sensor data.")
+
+    elif sensors is None:
+        st.info("Loading sensor data...")
+
+    elif not sensors:
+        st.info("No sensor data available.")
+
+    else:
+        df = pd.DataFrame([s.__dict__ for s in sensors])
+
+        df["sensor_type"] = df["sensor_type"].apply(lambda x: x.value)
+        df["time"] = pd.to_datetime(df["time"], unit="s")
+        df["latitude"] = df["location"].apply(lambda x: x.latitude)
+        df["longitude"] = df["location"].apply(lambda x: x.longitude)
+        df = df.drop(columns=["location"])
+
+        # -----------------------
+        # Filters
+        # -----------------------
+        filterCols = st.columns(5)
+
+        start_time = filterCols[0].datetime_input("Start", value=None, key="g_start")
+        end_time = filterCols[1].datetime_input("End", value=None, key="g_end")
+        country = filterCols[2].text_input("Country", key="g_country")
+        city = filterCols[3].text_input("City", key="g_city")
+
+        sensor_options = ["All"] + sorted(df["sensor_type"].unique())
+
+        sensor_type = filterCols[4].selectbox(
+            "Sensor",
+            options=sensor_options,
+            key="g_sensor"
+        )
+
+        filtered_df = df.copy()
+
+        if start_time:
+            filtered_df = filtered_df[
+                filtered_df["time"] >= pd.to_datetime(start_time)
+            ]
+
+        if end_time:
+            filtered_df = filtered_df[
+                filtered_df["time"] <= pd.to_datetime(end_time)
+            ]
+
+        if sensor_type != "All":
+            filtered_df = filtered_df[
+                filtered_df["sensor_type"] == sensor_type
+            ]
+
+        if country:
+            filtered_df = filtered_df[
+                filtered_df["country"].str.contains(country, case=False, na=False)
+            ]
+
+        if city:
+            filtered_df = filtered_df[
+                filtered_df["city"].str.contains(city, case=False, na=False)
+            ]
+
+        if filtered_df.empty:
+            st.warning("No data matches the selected filters.")
+            st.stop()
+
+        # -----------------------
+        # Graph Selector
+        # -----------------------
+        chart_type = st.selectbox(
+            "Select Graph Type",
+            ["Time Series", "Average by Sensor Type", "Distribution", "Count Over Time"]
+        )
+
+        # -----------------------
+        # Time Series
+        # -----------------------
+        if chart_type == "Time Series":
+            ts_df = filtered_df.sort_values("time")
+
+            pivot_df = ts_df.pivot_table(
+                index="time",
+                columns="sensor_type",
+                values="measurement",
+                aggfunc="mean"
+            )
+
+            st.line_chart(pivot_df)
+
+        # -----------------------
+        # Average
+        # -----------------------
+        elif chart_type == "Average by Sensor Type":
+            avg_df = (
+                filtered_df
+                .groupby("sensor_type")["measurement"]
+                .mean()
+            )
+
+            st.bar_chart(avg_df)
+
+        # -----------------------
+        # Distribution
+        # -----------------------
+        elif chart_type == "Distribution":
+            selected_sensor = st.selectbox(
+                "Select Sensor Type",
+                filtered_df["sensor_type"].unique()
+            )
+
+            dist_df = filtered_df[
+                filtered_df["sensor_type"] == selected_sensor
+            ]
+
+            st.bar_chart(
+                dist_df["measurement"].value_counts().sort_index()
+            )
+
+        # -----------------------
+        # Count Over Time
+        # -----------------------
+        elif chart_type == "Count Over Time":
+            freq = st.selectbox(
+                "Aggregation Level",
+                ["Hourly", "Daily", "Weekly"]
+            )
+
+            freq_map = {
+                "Hourly": "h",
+                "Daily": "D",
+                "Weekly": "W"
+            }
+
+            count_df = (
+                filtered_df
+                .set_index("time")
+                .groupby("sensor_type")
+                .resample(freq_map[freq])
+                .size()
+                .unstack(level=0)
+                .fillna(0)
+            )
+
+            st.line_chart(count_df)
+
+        # -----------------------
+        # Raw Data
+        # -----------------------
+        with st.expander("🔍 View Raw Data"):
+            st.dataframe(filtered_df, width='stretch')

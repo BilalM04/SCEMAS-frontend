@@ -46,15 +46,17 @@ UNITS = {
 # Mock Generators
 # ----------------------
 
-def _mock_sensor(sensor_id: str = None) -> SensorData:
+def _mock_sensor(sensor_id: str = None, max_days_back: int = 90) -> SensorData:
     city, lat, lon = random.choice(CITIES)
     sensor_type = random.choice(list(SensorType))
+
+    seconds_back = random.randint(0, max_days_back * 86400)
 
     return SensorData(
         sensor_id=sensor_id or f"sensor-{random.randint(100,999)}",
         measurement=round(random.uniform(10, 100), 2),
         unit=UNITS[sensor_type],
-        time=int(time.time()) - random.randint(0, 3600),
+        time=int(time.time()) - seconds_back,
         location=Coordinate(
             latitude=lat + random.uniform(-0.05, 0.05),
             longitude=lon + random.uniform(-0.05, 0.05),
