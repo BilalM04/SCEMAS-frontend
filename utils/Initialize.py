@@ -69,6 +69,12 @@ def initialize():
     if "fetch_failed" not in st.session_state:
         st.session_state["fetch_failed"] = False
 
+    if "last_refresh_time" not in st.session_state:
+        st.session_state.last_refresh_time = 0
+
+    if "system_health_data" not in st.session_state:
+        st.session_state.system_health_data = None
+
     if (st.session_state.logged_in == False and st.session_state.page != "app"):
         st.switch_page("app.py")
 
