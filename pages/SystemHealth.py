@@ -21,7 +21,7 @@ with header_col1:
     st.caption("Live system performance overview")
 
 with header_col2:
-    st.write("")  # spacing
+    st.write("")
     st.write("")
 
 # -------------------------------
@@ -34,7 +34,10 @@ REFRESH_COOLDOWN = 5  # seconds
 # -------------------------------
 @st.cache_data(show_spinner=False)
 def fetch_system_health_cached():
-    return get_system_health()
+    try:
+        return get_system_health()
+    except Exception as e:
+        return {"error": str(e)}
 
 def format_uptime(seconds: float) -> str:
     mins, sec = divmod(int(seconds), 60)
@@ -59,6 +62,9 @@ def usage_color(value: float) -> str:
         return "🟡"
     return "🔴"
 
+def is_error(data):
+    return data is None or (isinstance(data, dict) and "error" in data)
+
 # -------------------------------
 # Refresh Logic
 # -------------------------------
@@ -69,9 +75,15 @@ with header_col2:
     if st.button("🔄 Refresh", use_container_width=True):
         if cooldown_remaining <= 0:
             fetch_system_health_cached.clear()
-            st.session_state.system_health_data = fetch_system_health_cached()
+            result = fetch_system_health_cached()
+
+            if not is_error(result):
+                st.session_state.system_health_data = result
+                st.toast("System metrics refreshed", icon=":material/check:")
+            else:
+                st.toast("Failed to refresh", icon=":material/warning:")
+
             st.session_state.last_refresh_time = time.time()
-            st.toast("System metrics refreshed", icon=":material/check:")
         else:
             st.caption(f"⏱️ {cooldown_remaining:.1f}s")
 
@@ -80,10 +92,19 @@ with header_col2:
 # -------------------------------
 if st.session_state.system_health_data is None:
     with st.spinner("Fetching system health..."):
-        st.session_state.system_health_data = fetch_system_health_cached()
+        result = fetch_system_health_cached()
+        st.session_state.system_health_data = result
         st.session_state.last_refresh_time = time.time()
 
 data = st.session_state.system_health_data
+
+# -------------------------------
+# Error State UI
+# -------------------------------
+if is_error(data):
+    st.divider()
+    st.error("Unable to fetch system health data.")
+    st.stop()
 
 # -------------------------------
 # Metrics Section
@@ -134,7 +155,7 @@ def render_bar(label, value):
     """, unsafe_allow_html=True)
 
     st.progress(min(value / 100, 1.0))
-    st.write("")  # spacing
+    st.write("")
 
 with st.container():
     render_bar("CPU", data.cpu_usage)
