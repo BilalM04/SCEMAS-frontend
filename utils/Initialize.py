@@ -3,7 +3,7 @@ import streamlit as st
 from models.AccountRole import AccountRole
 
 def initialize():
-    st.set_page_config(page_title="SCEMAS")
+    st.set_page_config(page_title="SCEMAS", page_icon="./static/icon.png")
 
     if "toast" in st.session_state:
         st.toast(st.session_state.toast["message"], icon=st.session_state.toast["icon"])

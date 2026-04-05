@@ -10,28 +10,61 @@ def logout_dialog():
         logout()
         st.rerun()
 
+def render_page_links():
+    # ALERTS Section
+    alert_pages = []
+    if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
+        alert_pages.append(("pages/AlertPresentation_Alerts.py", "Alerts", "🚨"))
+    if st.session_state.role in [AccountRole.ADMIN]:
+        alert_pages.append(("pages/AlertPresentation_AlertRules.py", "Alert Rules", "📝"))
+    if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR, AccountRole.PUBLIC]:
+        alert_pages.append(("pages/AlertPresentation_Subscriptions.py", "Subscriptions", "📧"))
+
+    if alert_pages:
+        st.caption("Alerts")
+        for page, label, icon in alert_pages:
+            st.page_link(page, label=label, icon=icon, width='stretch')
+
+    # SENSORS Section
+    sensor_pages = []
+    if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
+        sensor_pages.append(("pages/SensorPresentation_Visualizations.py", "Visualizations", "🗺️"))
+        sensor_pages.append(("pages/SensorPresentation_Sensors.py", "Sensors", "📡"))
+    if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR, AccountRole.PUBLIC]:
+        sensor_pages.append(("pages/SensorPresentation_AggregatedData.py", "Aggregated Data", "📊"))
+
+    if sensor_pages:
+        st.caption("Sensors")
+        for page, label, icon in sensor_pages:
+            st.page_link(page, label=label, icon=icon, width='stretch')
+
+    # OPERATIONS Section
+    operation_pages = []
+    if st.session_state.role in [AccountRole.ADMIN]:
+        operation_pages.append(("pages/OperationalPresentation_Logs.py", "Logs", "📄"))
+    if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
+        operation_pages.append(("pages/OperationalPresentation_SystemHealth.py", "System Health", "❤️‍🩹"))
+
+    if operation_pages:
+        st.caption("Operations")
+        for page, label, icon in operation_pages:
+            st.page_link(page, label=label, icon=icon, width='stretch')
+
+    # ACCOUNTS Section
+    account_pages = []
+    if st.session_state.role in [AccountRole.ADMIN]:
+        account_pages.append(("pages/AccountPresentation_Accounts.py", "Accounts", "👤"))
+
+    if account_pages:
+        st.caption("Accounts")
+        for page, label, icon in account_pages:
+            st.page_link(page, label=label, icon=icon, width='stretch')
+
 def render_sidebar():
     with st.sidebar:
         st.page_link("pages/Home.py", label="Home", icon="🏠")
 
-        if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR, AccountRole.PUBLIC]:
-            st.caption("Public Access")
-            st.page_link("pages/AggregatedData.py", label="Aggregated Data", icon="📊")
-            st.page_link("pages/Subscriptions.py", label="Subscriptions", icon="📧")
-
-        if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
-            st.caption("Operations")
-            st.page_link("pages/Visualizations.py", label="Visualizations", icon="🗺️")
-            st.page_link("pages/Alerts.py", label="Alerts", icon="🚨")
-            st.page_link("pages/Sensors.py", label="Sensors", icon="📡")
-            st.page_link("pages/SystemHealth.py", label="System Health", icon="❤️‍🩹")
-
-        if st.session_state.role in [AccountRole.ADMIN]:
-            st.caption("Administration")
-            st.page_link("pages/AlertRules.py", label="Alert Rules", icon="📝")
-            st.page_link("pages/Logs.py", label="Logs", icon="📄")
-            st.page_link("pages/Accounts.py", label="Accounts", icon="👤")
-
+        render_page_links()
         st.divider()
 
         st.caption(f"**User:** {st.session_state.user}")
