@@ -62,7 +62,7 @@ def _parse_log(data: dict) -> LogInformation:
     return LogInformation(
         log_id=data["log_id"],
         user_id=data["user_id"],
-        log_message=data["message"],
+        log_message=data["log_message"],
         time=data["time"],
         email=data["email"]
     )
