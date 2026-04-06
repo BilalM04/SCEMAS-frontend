@@ -64,7 +64,7 @@ st.divider()
 # -----------------------
 st.subheader("Filters")
 
-filter_cols = st.columns(2)
+filter_cols = st.columns(3)
 
 role_filter = filter_cols[0].selectbox(
     "Filter by Role",
@@ -74,6 +74,8 @@ role_filter = filter_cols[0].selectbox(
 
 search = filter_cols[1].text_input("Search by Email")
 
+user_id_filter = filter_cols[2].text_input("Filter by User ID")
+
 filtered_accounts = accounts
 
 if role_filter:
@@ -81,6 +83,12 @@ if role_filter:
 
 if search:
     filtered_accounts = [a for a in filtered_accounts if search.lower() in a.email.lower()]
+
+if user_id_filter:
+    filtered_accounts = [
+        a for a in filtered_accounts
+        if user_id_filter.lower() in str(a.user_id).lower()
+    ]
 
 st.divider()
 
