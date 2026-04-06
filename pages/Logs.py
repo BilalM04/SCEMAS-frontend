@@ -25,12 +25,6 @@ REFRESH_COOLDOWN = 5  # seconds
 # -----------------------
 # Helpers
 # -----------------------
-@st.cache_data(show_spinner=False)
-def fetch_logs_cached():
-    try:
-        return get_logs()
-    except Exception as e:
-        return {"error": str(e)}
 
 def is_error(data):
     return data is None or (isinstance(data, dict) and "error" in data)
@@ -54,8 +48,7 @@ with header_col2:
     st.write("")
     if st.button("🔄 Refresh", use_container_width=True):
         if cooldown_remaining <= 0:
-            fetch_logs_cached.clear()
-            result = fetch_logs_cached()
+            result = get_logs()
 
             if not is_error(result):
                 st.session_state.logs_data = result
@@ -72,7 +65,7 @@ with header_col2:
 # -----------------------
 if st.session_state.logs_data is None:
     with st.spinner("Fetching logs..."):
-        result = fetch_logs_cached()
+        result = get_logs()
         st.session_state.logs_data = result
         st.session_state.last_logs_refresh_time = time.time()
 
