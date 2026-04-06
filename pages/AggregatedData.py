@@ -83,11 +83,11 @@ if submit:
         with cols[i]:
             st.metric(
                 label=f"{icon} {label} — Mean",
-                value=f"{stats.mean} {unit}",
-                help=f"Median: {stats.median} | Mode: {stats.mode}"
+                value=f"{stats.mean:.2f} {unit}",
+                help=f"Median: {stats.median:.2f} | Mode: {stats.mode:.2f}"
             )
             st.caption(
-                f"Median: **{stats.median}** · Mode: **{stats.mode}**"
+                f"Median: **{stats.median:.2f}** · Mode: **{stats.mode:.2f}**"
             )
 
     st.divider()

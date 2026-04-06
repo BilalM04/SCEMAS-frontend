@@ -183,7 +183,6 @@ def get_aggregated_data(
         return _mock_aggregated()
     else:
         res = request("GET", f"{base_url}/sensors/aggregated", params=params)
-        print(res)
         return _parse_aggregated(_unwrap(res))
 
 
