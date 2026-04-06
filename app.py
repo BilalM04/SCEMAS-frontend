@@ -1,6 +1,6 @@
 import streamlit as st
 import time
-from clients.AccountClient import initialize_role
+from clients.AccountClient import get_account, initialize_role
 from utils.Initialize import initialize
 from clients.FirebaseClient import login, refresh_id_token, signup
 
@@ -38,6 +38,7 @@ if st.session_state.logged_in == False:
             if st.button("Submit", use_container_width=True, key="login_button"):
                 if email != "" and password != "":
                     login(email, password)
+                    st.session_state.role = get_account().role
                     clear_login_fields()
                 else:
                     st.toast("Input fields cannot be empty.", icon=":material/warning:")
@@ -58,7 +59,7 @@ if st.session_state.logged_in == False:
             if st.button("Submit", use_container_width=True, key="signup_button"):
                 if email != "" and password != "":
                     if signup(email, password):
-                        initialize_role()
+                        st.session_state.role = initialize_role().role
                         refresh_id_token()
                     clear_signup_fields()
                 else:

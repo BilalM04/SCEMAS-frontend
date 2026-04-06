@@ -9,7 +9,7 @@ from models.AccountRole import AccountRole
 
 base_url = st.secrets["BACKEND_BASE_URL"]
 
-USE_MOCKS = True
+USE_MOCKS = False
 
 # ----------------------
 # Stable randomness (per session)

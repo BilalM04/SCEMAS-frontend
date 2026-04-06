@@ -49,7 +49,6 @@ def login(email, password):
 
         st.session_state.logged_in = True
         st.session_state.user = email
-        st.session_state.role = AccountRole.ADMIN
         st.session_state.token = user["idToken"]
         st.session_state.user_id = user["localId"]
         st.session_state.refresh_token = user["refreshToken"]
@@ -66,7 +65,6 @@ def signup(email, password):
 
         st.session_state.logged_in = True
         st.session_state.user = email
-        st.session_state.role = AccountRole.PUBLIC
         st.session_state.token = user["idToken"]
         st.session_state.user_id = user["localId"]
         st.session_state.refresh_token = user["refreshToken"]
