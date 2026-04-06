@@ -81,6 +81,24 @@ def initialize():
     if "predictions" not in st.session_state:
         st.session_state.predictions = []
 
+    if "alert_rules_data" not in st.session_state:
+        st.session_state.alert_rules_data = None
+        
+    if "refresh_alert_rules" not in st.session_state:
+        st.session_state.refresh_alert_rules = False
+
+    if "my_subscriptions" not in st.session_state:
+        st.session_state.my_subscriptions = None
+        
+    if "subscriptions_alert_rules" not in st.session_state:
+        st.session_state.subscriptions_alert_rules = None
+
+    if "logs_data" not in st.session_state:
+        st.session_state.logs_data = None
+
+    if "last_logs_refresh_time" not in st.session_state:
+        st.session_state.last_logs_refresh_time = 0
+
     if (st.session_state.logged_in == False and st.session_state.page != "app"):
         st.switch_page("app.py")
 
@@ -98,6 +116,18 @@ def initialize():
     if (st.session_state.page != "visualizations"):
         st.session_state["sensor_data"] = None
         st.session_state["fetch_failed"] = False
+
+    if (st.session_state.page != "alert_rules"):
+        st.session_state["alert_rules_data"] = None
+        st.session_state["refresh_alert_rules"] = False
+
+    if (st.session_state.page != "subscriptions"):
+        st.session_state["my_subscriptions"] = None
+        st.session_state["subscriptions_alert_rules"] = None
+
+    if (st.session_state.page != "logs"):
+        st.session_state["logs_data"] = None
+        st.session_state["last_logs_refresh_time"] = 0
 
     if (st.session_state.page != "predictions"):
         st.session_state.predictions_submitted = False

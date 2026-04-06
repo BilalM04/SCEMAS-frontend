@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from clients.SensorClient import get_aggregated_data, get_filtered_sensor_data
+from clients.SensorClient import get_aggregated_data
 from models.SensorType import SensorType
 from utils.Initialize import initialize
 from utils.Sidebar import render_sidebar
@@ -27,37 +27,35 @@ filter_cols = st.columns(4)
 
 country = filter_cols[0].text_input("Country")
 city = filter_cols[1].text_input("City")
-
-sensor_type = filter_cols[2].selectbox(
-    "Sensor Type",
-    options=[None] + list(SensorType),
-    format_func=lambda x: x.value if x else "All"
-)
-
-filter_cols2 = st.columns(2)
-start_time = filter_cols2[0].datetime_input("Start", value=None)
-end_time = filter_cols2[1].datetime_input("End", value=None)
+start_time = filter_cols[2].datetime_input("Start", value=None)
+end_time = filter_cols[3].datetime_input("End", value=None)
 
 submit = st.button("Fetch Data", width='stretch')
 
 st.divider()
 
 # -----------------------
+# Label Mapping (ENUM-BASED)
+# -----------------------
+sensor_labels = {
+    SensorType.AIR_QUALITY: ("🌬️", "Air Quality", "AQI"),
+    SensorType.NOISE: ("🔊", "Noise", "dB"),
+    SensorType.TEMPERATURE: ("🌡️", "Temperature", "°C"),
+    SensorType.HUMIDITY: ("💧", "Humidity", "%"),
+}
+
+# -----------------------
 # Fetch + Display
 # -----------------------
-if submit or "agg_data_loaded" in st.session_state:
-
-    st.session_state["agg_data_loaded"] = True
+if submit:
 
     start_ts = int(start_time.timestamp()) if start_time else None
     end_ts = int(end_time.timestamp()) if end_time else None
-    sensor_type_str = sensor_type.value if sensor_type else None
 
     try:
         agg = get_aggregated_data(
             country=country or None,
             city=city or None,
-            sensor_type=sensor_type_str,
             start_time=start_ts,
             end_time=end_ts
         )
@@ -74,25 +72,23 @@ if submit or "agg_data_loaded" in st.session_state:
     # -----------------------
     st.subheader("📈 Summary Statistics")
 
-    sensor_labels = {
-        "air_quality": ("🌬️", "Air Quality", "AQI"),
-        "noise": ("🔊", "Noise", "dB"),
-        "temperature": ("🌡️", "Temperature", "°C"),
-        "humidity": ("💧", "Humidity", "%"),
-    }
-
     cols = st.columns(len(agg))
 
-    for i, (key, stats) in enumerate(agg.items()):
-        icon, label, unit = sensor_labels.get(key, ("📡", key.title(), ""))
+    for i, (sensor_type_key, stats) in enumerate(agg.items()):
+        icon, label, unit = sensor_labels.get(
+            sensor_type_key,
+            ("📡", sensor_type_key.value.title(), "")
+        )
 
         with cols[i]:
             st.metric(
-                label=f"{icon} {label} — Avg",
-                value=f"{stats['avg']} {unit}",
-                help=f"Min: {stats['min']} | Max: {stats['max']} | Count: {stats['count']}"
+                label=f"{icon} {label} — Mean",
+                value=f"{stats.mean} {unit}",
+                help=f"Median: {stats.median} | Mode: {stats.mode}"
             )
-            st.caption(f"Min: **{stats['min']}** · Max: **{stats['max']}** · Readings: **{stats['count']}**")
+            st.caption(
+                f"Median: **{stats.median}** · Mode: **{stats.mode}**"
+            )
 
     st.divider()
 
@@ -102,15 +98,18 @@ if submit or "agg_data_loaded" in st.session_state:
     st.subheader("🔍 Breakdown by Sensor Type")
 
     rows = []
-    for key, stats in agg.items():
-        icon, label, unit = sensor_labels.get(key, ("📡", key.title(), ""))
+    for sensor_type_key, stats in agg.items():
+        icon, label, unit = sensor_labels.get(
+            sensor_type_key,
+            ("📡", sensor_type_key.value.title(), "")
+        )
+
         rows.append({
             "Sensor Type": f"{icon} {label}",
             "Unit": unit,
-            "Average": stats["avg"],
-            "Min": stats["min"],
-            "Max": stats["max"],
-            "Readings": stats["count"],
+            "Mean": stats.mean,
+            "Median": stats.median,
+            "Mode": stats.mode,
         })
 
     table_df = pd.DataFrame(rows)
@@ -124,12 +123,12 @@ if submit or "agg_data_loaded" in st.session_state:
     st.subheader("📊 Average Measurements by Sensor Type")
 
     chart_data = {
-        sensor_labels.get(k, ("📡", k.title(), ""))[1]: v["avg"]
+        sensor_labels.get(k, ("📡", k.value.title(), ""))[1]: v.mean
         for k, v in agg.items()
     }
 
     chart_df = pd.DataFrame.from_dict(
-        chart_data, orient="index", columns=["Average"]
+        chart_data, orient="index", columns=["Mean"]
     )
 
     st.bar_chart(chart_df)

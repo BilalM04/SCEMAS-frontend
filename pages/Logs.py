@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
+import time
 from datetime import datetime
+from collections import Counter
 
 from clients.OperationalClient import get_logs
 from utils.Initialize import initialize
@@ -15,54 +17,99 @@ st.session_state.page = "logs"
 initialize()
 render_sidebar()
 
-st.title('📄 Logs')
-st.caption('View system audit logs for user actions and events.')
+# -----------------------
+# Config
+# -----------------------
+REFRESH_COOLDOWN = 5  # seconds
 
 # -----------------------
-# Load Logs
+# Helpers
 # -----------------------
-if "logs_data" not in st.session_state or st.session_state.get("refresh_logs"):
+@st.cache_data(show_spinner=False)
+def fetch_logs_cached():
     try:
-        st.session_state["logs_data"] = get_logs()
-        st.session_state["refresh_logs"] = False
-    except Exception:
-        st.error("Failed to fetch logs.")
-        st.stop()
+        return get_logs()
+    except Exception as e:
+        return {"error": str(e)}
 
-logs = st.session_state["logs_data"]
+def is_error(data):
+    return data is None or (isinstance(data, dict) and "error" in data)
+
+# -----------------------
+# Header + Refresh
+# -----------------------
+header_col1, header_col2 = st.columns([3, 1])
+
+with header_col1:
+    st.title('📄 Logs')
+    st.caption('View system audit logs for user actions and events.')
+
+# cooldown calculation
+now = time.time()
+cooldown_remaining = REFRESH_COOLDOWN - (
+    now - st.session_state.last_logs_refresh_time
+)
+
+with header_col2:
+    st.write("")
+    if st.button("🔄 Refresh", use_container_width=True):
+        if cooldown_remaining <= 0:
+            fetch_logs_cached.clear()
+            result = fetch_logs_cached()
+
+            if not is_error(result):
+                st.session_state.logs_data = result
+                st.toast("Logs refreshed", icon=":material/check:")
+            else:
+                st.toast("Failed to refresh logs", icon=":material/warning:")
+
+            st.session_state.last_logs_refresh_time = time.time()
+        else:
+            st.caption(f"⏱️ {cooldown_remaining:.1f}s")
+
+# -----------------------
+# Initial Load
+# -----------------------
+if st.session_state.logs_data is None:
+    with st.spinner("Fetching logs..."):
+        result = fetch_logs_cached()
+        st.session_state.logs_data = result
+        st.session_state.last_logs_refresh_time = time.time()
+
+logs = st.session_state.logs_data
+
+# -----------------------
+# Error / Empty State
+# -----------------------
+if is_error(logs):
+    st.error("Failed to fetch logs.")
+    st.stop()
 
 if not logs:
     st.info("No logs available.")
     st.stop()
 
 # -----------------------
-# Refresh Button
-# -----------------------
-header_col1, header_col2 = st.columns([5, 1])
-
-with header_col2:
-    st.write("")
-    if st.button("🔄 Refresh", use_container_width=True):
-        st.session_state["refresh_logs"] = True
-        st.rerun()
-
-# -----------------------
 # Summary Metrics
 # -----------------------
 st.subheader("📊 Overview")
 
-metric_cols = st.columns(3)
+metric_cols = st.columns([1, 1, 4])
 
 metric_cols[0].metric("Total Logs", len(logs))
 
 unique_users = len({log.user_id for log in logs})
 metric_cols[1].metric("Unique Users", unique_users)
 
-from collections import Counter
 most_common_msg, most_common_count = Counter(
     log.log_message for log in logs
 ).most_common(1)[0]
-metric_cols[2].metric("Most Common Event", most_common_msg, help=f"Occurred {most_common_count} time(s)")
+
+metric_cols[2].metric(
+    "Most Common Event",
+    most_common_msg,
+    help=f"Occurred {most_common_count} time(s)"
+)
 
 st.divider()
 
@@ -71,14 +118,12 @@ st.divider()
 # -----------------------
 st.subheader("Filters")
 
-filter_cols = st.columns(3)
+filter_cols = st.columns(4)
 
 search_email = filter_cols[0].text_input("Search by Email")
 search_message = filter_cols[1].text_input("Search by Message")
-
-filter_cols2 = st.columns(2)
-start_time = filter_cols2[0].datetime_input("Start", value=None)
-end_time = filter_cols2[1].datetime_input("End", value=None)
+start_time = filter_cols[2].datetime_input("Start", value=None)
+end_time = filter_cols[3].datetime_input("End", value=None)
 
 st.divider()
 
@@ -125,15 +170,13 @@ if filtered_df.empty:
 st.caption(f"Showing **{len(filtered_df)}** of **{len(logs)}** logs")
 
 display_df = filtered_df[
-    ["time", "email", "log_message", "user_id", "log_id"]
+    ["time", "email", "log_message"]
 ].copy()
 
 display_df = display_df.rename(columns={
     "time": "Time",
     "email": "Email",
-    "log_message": "Message",
-    "user_id": "User ID",
-    "log_id": "Log ID",
+    "log_message": "Message"
 })
 
 display_df = display_df.sort_values("Time", ascending=False)
@@ -165,4 +208,18 @@ if event.selection["rows"]:
 
     with detail_cols[1]:
         st.markdown(f"**Message:** {selected_row['log_message']}")
-        st.markdown(f"**Time:** `{selected_row['time'].strftime('%Y-%m-%d %H:%M:%S')}`")
+        st.markdown(
+            f"**Time:** `{selected_row['time'].strftime('%Y-%m-%d %H:%M:%S')}`"
+        )
+
+# -----------------------
+# Footer
+# -----------------------
+st.divider()
+st.caption(
+    "🕒 Last updated: "
+    + time.strftime(
+        "%Y-%m-%d %H:%M:%S",
+        time.localtime(st.session_state.last_logs_refresh_time)
+    )
+)

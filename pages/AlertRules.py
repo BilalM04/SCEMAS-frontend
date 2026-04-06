@@ -20,13 +20,10 @@ st.session_state.page = "alert_rules"
 initialize()
 render_sidebar()
 
-st.title('📝 Alert Rules')
-st.caption('Create, view, and delete alert rules that trigger notifications when sensor thresholds are breached.')
-
 # -----------------------
 # Session State
 # -----------------------
-if "alert_rules_data" not in st.session_state or st.session_state.get("refresh_alert_rules"):
+if st.session_state.alert_rules_data == None or st.session_state.get("refresh_alert_rules"):
     try:
         st.session_state["alert_rules_data"] = get_all_alert_rules()
         st.session_state["refresh_alert_rules"] = False
@@ -96,11 +93,36 @@ def create_rule_dialog():
             }
         st.rerun()
 
+# -----------------------
+# Delete Confirmation Dialog
+# -----------------------
+@st.dialog("Confirm Delete")
+def confirm_delete_dialog(rule_id, rule_name):
+    st.warning(f"Are you sure you want to delete '{rule_name}'?")
+
+    if st.button("Confirm", use_container_width=True):
+        try:
+            delete_alert_rule(rule_id)
+            st.session_state["refresh_alert_rules"] = True
+            st.session_state.toast = {
+                "message": f"Rule '{rule_name}' deleted.",
+                "icon": ":material/check:"
+            }
+        except Exception:
+            st.session_state.toast = {
+                "message": f"Failed to delete rule '{rule_name}'.",
+                "icon": ":material/error:"
+            }
+        st.rerun()
 
 # -----------------------
 # Header Row
 # -----------------------
-header_col1, header_col2 = st.columns([5, 1])
+header_col1, header_col2 = st.columns([3, 1])
+
+with header_col1:
+    st.title('📝 Alert Rules')
+    st.caption('Create, view, and delete alert rules that trigger notifications when sensor thresholds are breached.')
 
 with header_col2:
     st.write("")
@@ -194,16 +216,4 @@ for rule in filtered_rules:
 
         with col3:
             if st.button("🗑️ Delete", key=f"delete_rule_{rule.rule_id}", use_container_width=True):
-                try:
-                    delete_alert_rule(rule.rule_id)
-                    st.session_state["refresh_alert_rules"] = True
-                    st.session_state.toast = {
-                        "message": f"Rule '{rule.name}' deleted.",
-                        "icon": ":material/check:"
-                    }
-                except Exception:
-                    st.session_state.toast = {
-                        "message": f"Failed to delete rule '{rule.name}'.",
-                        "icon": ":material/error:"
-                    }
-                st.rerun()
+                confirm_delete_dialog(rule.rule_id, rule.name)

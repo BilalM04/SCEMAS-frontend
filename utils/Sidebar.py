@@ -14,11 +14,11 @@ def render_page_links():
     # ALERTS Section
     alert_pages = []
     if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
-        alert_pages.append(("pages/AlertPresentation_Alerts.py", "Alerts", "🚨"))
+        alert_pages.append(("pages/Alerts.py", "Alerts", "🚨"))
     if st.session_state.role in [AccountRole.ADMIN]:
-        alert_pages.append(("pages/AlertPresentation_AlertRules.py", "Alert Rules", "📝"))
+        alert_pages.append(("pages/AlertRules.py", "Alert Rules", "📝"))
     if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR, AccountRole.PUBLIC]:
-        alert_pages.append(("pages/AlertPresentation_Subscriptions.py", "Subscriptions", "📧"))
+        alert_pages.append(("pages/Subscriptions.py", "Subscriptions", "📧"))
 
     if alert_pages:
         st.caption("Alerts")
@@ -28,11 +28,11 @@ def render_page_links():
     # SENSORS Section
     sensor_pages = []
     if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
-        sensor_pages.append(("pages/SensorPresentation_Visualizations.py", "Visualizations", "🗺️"))
-        sensor_pages.append(("pages/SensorPresentation_Sensors.py", "Sensors", "📡"))
-        sensor_pages.append(("pages/SensorPresentation_Predictions.py", "Predictions", "🧠"))
+        sensor_pages.append(("pages/Visualizations.py", "Visualizations", "🗺️"))
+        sensor_pages.append(("pages/Sensors.py", "Sensors", "📡"))
+        sensor_pages.append(("pages/Predictions.py", "Predictions", "🧠"))
     if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR, AccountRole.PUBLIC]:
-        sensor_pages.append(("pages/SensorPresentation_AggregatedData.py", "Aggregated Data", "📊"))
+        sensor_pages.append(("pages/AggregatedData.py", "Aggregated Data", "📊"))
 
     if sensor_pages:
         st.caption("Sensors")
@@ -42,9 +42,9 @@ def render_page_links():
     # OPERATIONS Section
     operation_pages = []
     if st.session_state.role in [AccountRole.ADMIN]:
-        operation_pages.append(("pages/OperationalPresentation_Logs.py", "Logs", "📄"))
+        operation_pages.append(("pages/Logs.py", "Logs", "📄"))
     if st.session_state.role in [AccountRole.ADMIN, AccountRole.OPERATOR]:
-        operation_pages.append(("pages/OperationalPresentation_SystemHealth.py", "System Health", "❤️‍🩹"))
+        operation_pages.append(("pages/SystemHealth.py", "System Health", "❤️‍🩹"))
 
     if operation_pages:
         st.caption("Operations")
@@ -54,7 +54,7 @@ def render_page_links():
     # ACCOUNTS Section
     account_pages = []
     if st.session_state.role in [AccountRole.ADMIN]:
-        account_pages.append(("pages/AccountPresentation_Accounts.py", "Accounts", "👤"))
+        account_pages.append(("pages/Accounts.py", "Accounts", "👤"))
 
     if account_pages:
         st.caption("Accounts")

@@ -3,6 +3,7 @@ from typing import List, Dict, Optional
 import time
 import random
 
+from models.AggregatedData import AggregatedData
 from utils.Request import request
 
 from models.SensorData import SensorData
@@ -67,17 +68,29 @@ def _mock_sensor(sensor_id: str = None, max_days_back: int = 90) -> SensorData:
     )
 
 
-def _mock_aggregated() -> Dict[str, dict]:
-    result = {}
+def _mock_aggregated() -> Dict[SensorType, AggregatedData]:
+    result: Dict[SensorType, AggregatedData] = {}
 
     for sensor_type in SensorType:
         values = [random.uniform(10, 100) for _ in range(random.randint(5, 20))]
-        result[sensor_type.value] = {
-            "avg": round(sum(values) / len(values), 2),
-            "min": round(min(values), 2),
-            "max": round(max(values), 2),
-            "count": len(values)
-        }
+
+        values_sorted = sorted(values)
+        n = len(values)
+
+        mean = sum(values) / n
+        median = (
+            values_sorted[n // 2]
+            if n % 2 == 1
+            else (values_sorted[n // 2 - 1] + values_sorted[n // 2]) / 2
+        )
+
+        mode = max(set(values), key=values.count)
+
+        result[sensor_type] = AggregatedData(
+            mean=round(mean, 2),
+            median=round(median, 2),
+            mode=round(mode, 2)
+        )
 
     return result
 
@@ -100,6 +113,26 @@ def _parse_sensor(data: dict) -> SensorData:
         country=data["country"],
         city=data["city"]
     )
+
+def _parse_aggregated(data: Dict[str, dict]) -> Dict[SensorType, AggregatedData]:
+    result: Dict[SensorType, AggregatedData] = {}
+
+    if "data" in data:
+        data = data["data"]
+
+    for key, value in data.items():
+        try:
+            sensor_type = SensorType(key)
+        except ValueError:
+            continue
+
+        result[sensor_type] = AggregatedData(
+            mean=value["mean"],
+            median=value["median"],
+            mode=value["mode"]
+        )
+
+    return result
 
 
 def _unwrap(response):
@@ -134,7 +167,7 @@ def get_aggregated_data(
     sensor_type: Optional[str] = None,
     start_time: Optional[int] = None,
     end_time: Optional[int] = None
-) -> Dict[str, dict]:
+) -> Dict[SensorType, AggregatedData]:
 
     params = {
         "country": country,
@@ -144,14 +177,14 @@ def get_aggregated_data(
         "end_time": end_time
     }
 
-    # remove None values
     params = {k: v for k, v in params.items() if v is not None}
 
     if USE_MOCKS:
         return _mock_aggregated()
     else:
         res = request("GET", f"{base_url}/sensors/aggregated", params=params)
-        return _unwrap(res)
+        print(res)
+        return _parse_aggregated(_unwrap(res))
 
 
 def get_filtered_sensor_data(

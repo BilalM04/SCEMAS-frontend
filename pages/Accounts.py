@@ -35,31 +35,6 @@ if not accounts:
     st.stop()
 
 # -----------------------
-# Filters
-# -----------------------
-st.subheader("Filters")
-
-filter_cols = st.columns(2)
-
-role_filter = filter_cols[0].selectbox(
-    "Filter by Role",
-    options=[None] + list(AccountRole),
-    format_func=lambda x: x.value if x else "All"
-)
-
-search = filter_cols[1].text_input("Search by Email")
-
-filtered_accounts = accounts
-
-if role_filter:
-    filtered_accounts = [a for a in filtered_accounts if a.role == role_filter]
-
-if search:
-    filtered_accounts = [a for a in filtered_accounts if search.lower() in a.email.lower()]
-
-st.divider()
-
-# -----------------------
 # Summary Metrics
 # -----------------------
 st.subheader("📊 Overview")
@@ -81,6 +56,31 @@ role_icons = {
 for i, (role, count) in enumerate(role_counts.items()):
     icon = role_icons.get(role, "👤")
     metric_cols[i + 1].metric(f"{icon} {role.value.title()}", count)
+
+st.divider()
+
+# -----------------------
+# Filters
+# -----------------------
+st.subheader("Filters")
+
+filter_cols = st.columns(2)
+
+role_filter = filter_cols[0].selectbox(
+    "Filter by Role",
+    options=[None] + list(AccountRole),
+    format_func=lambda x: x.value if x else "All"
+)
+
+search = filter_cols[1].text_input("Search by Email")
+
+filtered_accounts = accounts
+
+if role_filter:
+    filtered_accounts = [a for a in filtered_accounts if a.role == role_filter]
+
+if search:
+    filtered_accounts = [a for a in filtered_accounts if search.lower() in a.email.lower()]
 
 st.divider()
 
