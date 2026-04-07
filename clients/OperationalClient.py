@@ -11,7 +11,7 @@ from models.SystemHealth import SystemHealth
 
 base_url = st.secrets["BACKEND_BASE_URL"]
 
-USE_MOCKS = True
+USE_MOCKS = st.secrets["OPERATIONAL_MOCKS"].lower() == "true"
 
 # ----------------------
 # Stable randomness (per session)

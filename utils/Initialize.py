@@ -93,6 +93,9 @@ def initialize():
     if "subscriptions_alert_rules" not in st.session_state:
         st.session_state.subscriptions_alert_rules = None
 
+    if "subscriptions_alert_rules" not in st.session_state:
+        st.session_state["refresh_subscriptions"] = False
+
     if "logs_data" not in st.session_state:
         st.session_state.logs_data = None
 
@@ -124,6 +127,7 @@ def initialize():
     if (st.session_state.page != "subscriptions"):
         st.session_state["my_subscriptions"] = None
         st.session_state["subscriptions_alert_rules"] = None
+        st.session_state["refresh_subscriptions"] = False
 
     if (st.session_state.page != "logs"):
         st.session_state["logs_data"] = None

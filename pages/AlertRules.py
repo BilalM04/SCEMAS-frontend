@@ -21,17 +21,6 @@ initialize()
 render_sidebar()
 
 # -----------------------
-# Session State
-# -----------------------
-if st.session_state.alert_rules_data == None or st.session_state.get("refresh_alert_rules"):
-    try:
-        st.session_state["alert_rules_data"] = get_all_alert_rules()
-        st.session_state["refresh_alert_rules"] = False
-    except Exception:
-        st.error("Failed to fetch alert rules.")
-        st.stop()
-
-# -----------------------
 # Create Alert Rule Dialog
 # -----------------------
 @st.dialog("Create Alert Rule", width="large")
@@ -126,7 +115,7 @@ with header_col1:
 
 with header_col2:
     st.write("")
-    if st.button("＋ Create Rule", use_container_width=True):
+    if st.button("+ Create Rule", use_container_width=True):
         create_rule_dialog()
 
 st.divider()
@@ -147,6 +136,17 @@ sensor_filter = filter_cols[0].selectbox(
 search = filter_cols[1].text_input("Search by Rule Name")
 
 st.divider()
+
+# -----------------------
+# Session State
+# -----------------------
+if st.session_state.alert_rules_data == None or st.session_state.get("refresh_alert_rules"):
+    try:
+        st.session_state["alert_rules_data"] = get_all_alert_rules()
+        st.session_state["refresh_alert_rules"] = False
+    except Exception:
+        st.error("Failed to fetch alert rules.")
+        st.stop()
 
 # -----------------------
 # Results

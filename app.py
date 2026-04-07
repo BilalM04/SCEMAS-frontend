@@ -37,8 +37,11 @@ if st.session_state.logged_in == False:
         with col1:
             if st.button("Submit", use_container_width=True, key="login_button"):
                 if email != "" and password != "":
-                    login(email, password)
-                    st.session_state.role = get_account().role
+                    try:
+                        login(email, password)
+                        st.session_state.role = get_account().role
+                    except:
+                        pass
                     clear_login_fields()
                 else:
                     st.toast("Input fields cannot be empty.", icon=":material/warning:")
@@ -59,8 +62,11 @@ if st.session_state.logged_in == False:
             if st.button("Submit", use_container_width=True, key="signup_button"):
                 if email != "" and password != "":
                     if signup(email, password):
-                        st.session_state.role = initialize_role().role
-                        refresh_id_token()
+                        try:
+                            st.session_state.role = initialize_role().role
+                            refresh_id_token()
+                        except:
+                            pass
                     clear_signup_fields()
                 else:
                     st.toast("Input fields cannot be empty.", icon=":material/warning:")

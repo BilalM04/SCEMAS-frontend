@@ -65,9 +65,13 @@ with header_col2:
 # -----------------------
 if st.session_state.logs_data is None:
     with st.spinner("Fetching logs..."):
-        result = get_logs()
-        st.session_state.logs_data = result
-        st.session_state.last_logs_refresh_time = time.time()
+        try:
+            result = get_logs()
+            st.session_state.logs_data = result
+            st.session_state.last_logs_refresh_time = time.time()
+        except:
+            st.error("Failed to fetch logs")
+            st.stop()
 
 logs = st.session_state.logs_data
 

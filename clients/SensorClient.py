@@ -12,7 +12,7 @@ from models.Coordinate import Coordinate
 
 base_url = st.secrets["BACKEND_BASE_URL"]
 
-USE_MOCKS = True
+USE_MOCKS = st.secrets["SENSOR_MOCKS"].lower() == "true"
 
 # ----------------------
 # Stable randomness (per session)
@@ -216,54 +216,51 @@ def predict_data(
     city: str,
     sensor_type: SensorType
 ) -> List[SensorData]:
-    if USE_MOCKS:
-        predictions: List[SensorData] = []
+    predictions: List[SensorData] = []
 
-        base_ranges = {
-            SensorType.TEMPERATURE: (10, 25),
-            SensorType.HUMIDITY: (40, 70),
-            SensorType.NOISE: (30, 70),
-            SensorType.AIR_QUALITY: (20, 80),
-        }
+    base_ranges = {
+        SensorType.TEMPERATURE: (10, 25),
+        SensorType.HUMIDITY: (40, 70),
+        SensorType.NOISE: (30, 70),
+        SensorType.AIR_QUALITY: (20, 80),
+    }
 
-        unit = UNITS[sensor_type]
+    unit = UNITS[sensor_type]
 
-        city_match = next((c for c in CITIES if c[0] == city), None)
-        if city_match:
-            _, lat, lon = city_match
-        else:
-            _, lat, lon = random.choice(CITIES)
-
-        base_min, base_max = base_ranges[sensor_type]
-        current_value = random.uniform(base_min, base_max)
-
-        now = int(time.time())
-
-        for day in range(30):
-            trend = (day * random.uniform(-0.2, 0.2))
-            seasonal = 5 * random.uniform(-1, 1)
-            noise = random.uniform(-2, 2)
-
-            predicted_value = current_value + trend + seasonal + noise
-
-            predicted_value = max(base_min, min(base_max + 20, predicted_value))
-
-            predictions.append(
-                SensorData(
-                    sensor_id=f"pred-{random.randint(1000,9999)}",
-                    measurement=round(predicted_value, 2),
-                    unit=unit,
-                    time=now + day * 86400,
-                    location=Coordinate(
-                        latitude=lat + random.uniform(-0.01, 0.01),
-                        longitude=lon + random.uniform(-0.01, 0.01),
-                    ),
-                    sensor_type=sensor_type,
-                    country=country,
-                    city=city,
-                )
-            )
-
-        return predictions
+    city_match = next((c for c in CITIES if c[0] == city), None)
+    if city_match:
+        _, lat, lon = city_match
     else:
-        return []
+        _, lat, lon = random.choice(CITIES)
+
+    base_min, base_max = base_ranges[sensor_type]
+    current_value = random.uniform(base_min, base_max)
+
+    now = int(time.time())
+
+    for day in range(30):
+        trend = (day * random.uniform(-0.2, 0.2))
+        seasonal = 5 * random.uniform(-1, 1)
+        noise = random.uniform(-2, 2)
+
+        predicted_value = current_value + trend + seasonal + noise
+
+        predicted_value = max(base_min, min(base_max + 20, predicted_value))
+
+        predictions.append(
+            SensorData(
+                sensor_id=f"pred-{random.randint(1000,9999)}",
+                measurement=round(predicted_value, 2),
+                unit=unit,
+                time=now + day * 86400,
+                location=Coordinate(
+                    latitude=lat + random.uniform(-0.01, 0.01),
+                    longitude=lon + random.uniform(-0.01, 0.01),
+                ),
+                sensor_type=sensor_type,
+                country=country,
+                city=city,
+            )
+        )
+
+    return predictions

@@ -36,6 +36,7 @@ def confirm_subscribe_dialog(rule_id, rule_name):
                 "message": f"Subscribed to {rule_name}.",
                 "icon": ":material/check:"
             }
+            st.session_state.refresh_subscriptions = True
         except Exception:
             st.session_state.toast = {
                 "message": f"Failed to subscribe.",
@@ -55,6 +56,7 @@ def confirm_unsubscribe_dialog(rule_id, rule_name):
                 "message": f"Unsubscribed from {rule_name}.",
                 "icon": ":material/check:"
             }
+            st.session_state.refresh_subscriptions = True
         except Exception:
             st.session_state.toast = {
                 "message": f"Failed to unsubscribe.",
@@ -65,8 +67,9 @@ def confirm_unsubscribe_dialog(rule_id, rule_name):
 # -----------------------
 # Load Data
 # -----------------------
-if st.session_state.my_subscriptions is None:
+if st.session_state.my_subscriptions is None or st.session_state.refresh_subscriptions == True:
     try:
+        st.session_state.refresh_subscriptions = False
         st.session_state.my_subscriptions = get_my_subscriptions()
     except Exception:
         st.error("Failed to fetch your subscriptions.")

@@ -18,7 +18,7 @@ from models.ComparisonOperator import ComparisonOperator
 
 base_url = st.secrets["BACKEND_BASE_URL"]
 
-USE_MOCKS = True
+USE_MOCKS = st.secrets["ALERT_MOCKS"].lower() == "true"
 
 # ----------------------
 # Stable randomness (per session)
@@ -226,6 +226,7 @@ def get_all_alert_rules() -> List[AlertRuleData]:
         return [_mock_rule() for _ in range(random.randint(1, 5))]
     else:
         res = request("GET", f"{base_url}/alerts/rules")
+        print(res)
         return [_parse_alert_rule(r) for r in _unwrap(res)]
 
 
