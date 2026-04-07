@@ -59,9 +59,15 @@ FIREBASE_STORAGE_BUCKET = ""
 FIREBASE_MESSAGING_SENDER_ID = ""
 FIREBASE_APP_ID = ""
 BACKEND_BASE_URL = ""
+ALERT_MOCKS = ""
+ACCOUNT_MOCKS = ""
+OPERATIONAL_MOCKS = ""
+SENSOR_MOCKS = ""
 ```
 
 > ⚠️ Keep this file private and do not commit it to version control.
+
+> ℹ️ The `*_MOCKS` set to either "True" or "False" if you want to mock the API calls.
 
 ### 5. Run the application
 
