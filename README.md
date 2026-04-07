@@ -2,6 +2,8 @@
 
 SCEMAS (Smart City Environmental Monitoring & Alert System) is a platform designed to monitor environmental data, generate alerts, and provide actionable insights for smart city infrastructure.
 
+**Hosted App:** <https://scemas.streamlit.app/>
+
 This repository contains the frontend application, providing an intuitive user interface for interacting with the system.
 
 ## Prerequisites
